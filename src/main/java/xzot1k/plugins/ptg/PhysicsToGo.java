@@ -4,6 +4,9 @@
 
 package xzot1k.plugins.ptg;
 
+import me.devtec.shared.Ref;
+import me.devtec.shared.versioning.VersionUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
@@ -38,7 +41,6 @@ public class PhysicsToGo extends JavaPlugin {
     private static PhysicsToGo pluginInstance;
     private Manager manager;
 
-    private double serverVersion;
     private boolean particleAPI;
 
     private FactionsHook factionsHook;
@@ -115,9 +117,19 @@ public class PhysicsToGo extends JavaPlugin {
             }
         }
 
+        try {
+            Ref.init(Ref.getClass("net.md_5.bungee.api.ChatColor") != null ? Ref.getClass("net.kyori.adventure.Adventure") != null ? Ref.ServerType.PAPER : Ref.ServerType.SPIGOT : Ref.ServerType.BUKKIT,
+                    Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3]);
+        } catch (Exception e) {
+            String version = (String) Ref.invoke(Bukkit.getServer(), "getMinecraftVersion");
+            VersionUtils.Version ver = VersionUtils.getVersion(version, "1.20.5");
+            if (ver == VersionUtils.Version.SAME_VERSION || ver == VersionUtils.Version.NEWER_VERSION)
+                Ref.init(Ref.getClass("net.md_5.bungee.api.ChatColor") != null ? Ref.getClass("net.kyori.adventure.Adventure") != null ? Ref.ServerType.PAPER : Ref.ServerType.SPIGOT : Ref.ServerType.BUKKIT,
+                        version);
+        }
         // identifies and initializes the server's version.
-        setServerVersion(Double.parseDouble(getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3]
-                .replace("_R", ".").replaceAll("[rvV_]*", "")));
+        /*setServerVersion(Double.parseDouble(getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3]
+                .replace("_R", ".").replaceAll("[rvV_]*", "")));*/
 
         // creates and registers a new instance of the Manager class.
         setManager(new Manager(this));
@@ -305,12 +317,6 @@ public class PhysicsToGo extends JavaPlugin {
 
     private void setManager(Manager manager) {
         this.manager = manager;
-    }
-
-    public double getServerVersion() {return serverVersion;}
-
-    private void setServerVersion(double serverVersion) {
-        this.serverVersion = serverVersion;
     }
 
     public boolean hasParticleAPI() {

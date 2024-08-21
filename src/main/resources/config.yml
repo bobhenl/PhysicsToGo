@@ -43,6 +43,8 @@ explosive-regeneration-delay: 20
 explosive-physics: true
 # This determines whether exploded blocks have drops or not.
 explosive-drops: true
+# Restore a container, but empty and drop items that are in the container, for this to work, setting 'container-restoration' needs to be set to false
+restore-container-empty-but-drop-items: false
 # This tells the plugin if tnt harmed by an entity explosion should be ignited, rather than taking the effect of other normal blocks.
 explosive-tnt-ignite: true
 # This tells the plugin what the fuse of harmed tnt blocks should be (IN TICKS, 20 ticks = 1 second). This option requires the "explosive-tnt-ignite" feature to be enabled.

@@ -10,7 +10,7 @@ commands:
   physicstogo:
     default: op
     description: The initial command for the plugin which handles it all.
-    aliases: [ptg]
+    aliases: [ ptg ]
 
 permissions:
 

@@ -4,6 +4,7 @@
 
 package xzot1k.plugins.ptg.core.tasks;
 
+import me.devtec.shared.Ref;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -46,14 +47,13 @@ public class BlockRegenerationTask implements Runnable {
         RegenerateEvent regenerateEvent = new RegenerateEvent(getPluginInstance(), getBlockState());
         getPluginInstance().getServer().getPluginManager().callEvent(regenerateEvent);
         if (regenerateEvent.isCancelled()) return;
-
         getBlockState().update(true, false);
         getPluginInstance().getManager().playNaturalBlockPlaceEffect((!isPlacement() ? getBlockState().getBlock() : getBlock()));
 
         if (getBlockState() instanceof InventoryHolder) {
-            if (!getPluginInstance().getConfig().getBoolean("container-restoration")) return;
-
-            InventoryHolder ih = (InventoryHolder) getBlockState();
+            if (!getPluginInstance().getConfig().getBoolean("container-restoration"))
+                return;
+            InventoryHolder ih = (InventoryHolder) getBlock().getState();
 
             List<LocationClone> locationClones = new ArrayList<>(getPluginInstance().getManager().getSavedContainerContents().keySet());
             for (int i = -1; ++i < locationClones.size(); ) {
@@ -61,7 +61,9 @@ public class BlockRegenerationTask implements Runnable {
                 if (locationClone == null || !locationClone.isIdentical(getBlock().getLocation())) continue;
 
                 ItemStack[] items = getPluginInstance().getManager().getSavedContainerContents().get(locationClone);
-                if (items != null && items.length != 0) ih.getInventory().setContents(items);
+                if (items != null && items.length != 0)
+                    ih.getInventory().setContents(items);
+                getBlock().getState().update(true);
 
                 getPluginInstance().getManager().getSavedContainerContents().remove(locationClone);
             }
@@ -77,7 +79,7 @@ public class BlockRegenerationTask implements Runnable {
 
                 Object signData = getPluginInstance().getManager().getSavedSignData().get(locationClone);
 
-                if (getPluginInstance().getServerVersion() >= 1_20) {
+                if (Ref.isNewerThan(19)) {
                     List<Pair<org.bukkit.block.sign.Side, org.bukkit.block.sign.SignSide>> signSides =
                             (List<Pair<org.bukkit.block.sign.Side, org.bukkit.block.sign.SignSide>>) signData;
                     for (int j = -1; ++j < signSides.size(); ) {

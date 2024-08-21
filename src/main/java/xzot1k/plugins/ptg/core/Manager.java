@@ -4,6 +4,7 @@
 
 package xzot1k.plugins.ptg.core;
 
+import me.devtec.shared.Ref;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -92,14 +93,18 @@ public class Manager {
      *
      * @return If the server is post 1.13.
      */
-    public boolean isBlockDataVersion() {return getPluginInstance().getServerVersion() >= 1_13;}
+    public boolean isBlockDataVersion() {
+        return Ref.isNewerThan(12); /*return getPluginInstance().getServerVersion() >= 1_13;*/
+    }
 
     /**
      * Determines if the server version is post 1.8 or not.
      *
      * @return If the server is post 1.8.
      */
-    public boolean isOffHandVersion() {return getPluginInstance().getServerVersion() > 1_8;}
+    public boolean isOffHandVersion() {
+        return Ref.isNewerThan(8);/*getPluginInstance().getServerVersion() > 1_8;*/
+    }
 
     /**
      * @param block The block to check
@@ -432,7 +437,8 @@ public class Manager {
         FallingBlock fallingBlock;
         if (!getPluginInstance().getManager().isBlockDataVersion())
             fallingBlock = block.getWorld().spawnFallingBlock(block.getLocation().clone().add(0.5, 0, 0.5), block.getType(), block.getData());
-        else fallingBlock = block.getWorld().spawnFallingBlock(block.getLocation().clone().add(0.5, 0, 0.5), blockState.getBlockData());
+        else
+            fallingBlock = block.getWorld().spawnFallingBlock(block.getLocation().clone().add(0.5, 0, 0.5), blockState.getBlockData());
         fallingBlock.setCustomName("PTG_FALLING_BLOCK");
         fallingBlock.setCustomNameVisible(false);
         fallingBlock.setDropItem(false);
