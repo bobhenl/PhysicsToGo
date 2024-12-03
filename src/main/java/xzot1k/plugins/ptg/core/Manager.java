@@ -298,9 +298,10 @@ public class Manager {
      */
     public void playNaturalBlockBreakEffect(Block block) {
         if (getPluginInstance().getManager().isBlockDataVersion()) {
-            block.getWorld().spawnParticle(Particle.BLOCK_DUST, ((block.getLocation().getX() + 0.5) + getPluginInstance().getManager().getRandomInRange(-1, 1)),
+
+            block.getWorld().spawnParticle(Ref.isNewerThan(20) ? ((Particle) Ref.getStatic(Particle.class, "DUST")) : Particle.BLOCK_DUST, ((block.getLocation().getX() + 0.5) + getPluginInstance().getManager().getRandomInRange(-1, 1)),
                     ((block.getLocation().getY() + 0.5) + getPluginInstance().getManager().getRandomInRange(-1, 1)),
-                    ((block.getLocation().getZ() + 0.5) + getPluginInstance().getManager().getRandomInRange(-1, 1)), 10, block.getBlockData());
+                    ((block.getLocation().getZ() + 0.5) + getPluginInstance().getManager().getRandomInRange(-1, 1)), 10, new Particle.DustOptions(block.getBlockData().getMapColor(),block.getBlockData().getLightEmission()));
 
             Sound sound = Sound.BLOCK_METAL_BREAK;
             if (block.getType().name().contains("LOG") || block.getType().name().contains("WOOD")
@@ -365,9 +366,9 @@ public class Manager {
      */
     public void playNaturalBlockPlaceEffect(Block block) {
         if (getPluginInstance().getManager().isBlockDataVersion()) {
-            block.getWorld().spawnParticle(Particle.BLOCK_DUST, ((block.getLocation().getX() + 0.5) + getPluginInstance().getManager().getRandomInRange(-0.5, 0.5)),
+            block.getWorld().spawnParticle(Ref.isNewerThan(20) ? ((Particle) Ref.getStatic(Particle.class, "DUST")) : Particle.BLOCK_DUST, ((block.getLocation().getX() + 0.5) + getPluginInstance().getManager().getRandomInRange(-0.5, 0.5)),
                     ((block.getLocation().getY() + 0.5) + getPluginInstance().getManager().getRandomInRange(-0.5, 0.5)),
-                    ((block.getLocation().getZ() + 0.5) + getPluginInstance().getManager().getRandomInRange(-0.5, 0.5)), 5, block.getBlockData());
+                    ((block.getLocation().getZ() + 0.5) + getPluginInstance().getManager().getRandomInRange(-0.5, 0.5)), 5, new Particle.DustOptions(block.getBlockData().getMapColor(), block.getBlockData().getLightEmission()));
 
             Sound sound = Sound.BLOCK_METAL_PLACE;
             if (block.getType().name().contains("LOG") || block.getType().name().contains("WOOD")

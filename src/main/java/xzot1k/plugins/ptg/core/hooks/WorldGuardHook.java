@@ -4,16 +4,27 @@
 
 package xzot1k.plugins.ptg.core.hooks;
 
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
+import com.sk89q.worldguard.WorldGuard;
+import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.flags.Flag;
+import com.sk89q.worldguard.protection.flags.StateFlag;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.sk89q.worldguard.protection.regions.RegionContainer;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.event.entity.EntityExplodeEvent;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Set;
 
 public class WorldGuardHook {
 
     private static com.sk89q.worldguard.protection.flags.StateFlag PTG_ALLOW;
+    private static StateFlag EXPLOSION_FLAG;
     private final com.sk89q.worldguard.bukkit.WorldGuardPlugin worldGuardPlugin;
 
     public WorldGuardHook() {
@@ -31,13 +42,51 @@ public class WorldGuardHook {
         if (registry == null) return;
         try {
             com.sk89q.worldguard.protection.flags.StateFlag flag = new com.sk89q.worldguard.protection.flags.StateFlag("ptg-allow", false);
+            StateFlag explosionFlag = new StateFlag("ptg-explosion",false);
             registry.register(flag);
+            registry.register(explosionFlag);
             PTG_ALLOW = flag;
+            EXPLOSION_FLAG=explosionFlag;
         } catch (com.sk89q.worldguard.protection.flags.registry.FlagConflictException e) {
             com.sk89q.worldguard.protection.flags.Flag<?> existing = registry.get("ptg-allow");
+            Flag<?> explosion = registry.get("ptg-explosion");
             if (existing instanceof com.sk89q.worldguard.protection.flags.StateFlag)
                 PTG_ALLOW = (com.sk89q.worldguard.protection.flags.StateFlag) existing;
+            if(explosion instanceof StateFlag){
+                EXPLOSION_FLAG=(StateFlag) explosion;
+            }
         }
+    }
+
+    public boolean handleExplosion(EntityExplodeEvent e){
+        if(e.isCancelled())
+            return false;
+        RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
+        if (e.getLocation().getWorld() == null)
+            return false;
+        com.sk89q.worldedit.util.Location weLoc = BukkitAdapter.adapt(e.getLocation());
+        RegionManager manager = container.get(BukkitAdapter.adapt(e.getLocation().getWorld()));
+        if(manager==null)
+            return false;
+        ApplicableRegionSet set = manager.getApplicableRegions(weLoc.toVector().toBlockPoint());
+        HashMap<Integer, Boolean> priorities = new HashMap<>();
+        for(ProtectedRegion region:set.getRegions()){
+            StateFlag.State object = region.getFlag(EXPLOSION_FLAG);
+            if(object==null)
+                object= StateFlag.State.DENY;
+            if(priorities.containsKey(region.getPriority()))
+                continue;
+            if(region.contains(weLoc.toVector().toBlockPoint())){
+                priorities.put(region.getPriority(),object== StateFlag.State.DENY);
+            }
+        }
+
+        int highestPriority = priorities.keySet().stream().max(Integer::compareTo).orElse(-125);
+        if(highestPriority!=-125&& priorities.get(highestPriority)){
+            e.blockList().clear();
+            return true;
+        }
+        return false;
     }
 
     public boolean passedWorldGuardHook(Location location) {

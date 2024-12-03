@@ -34,6 +34,7 @@ import xzot1k.plugins.ptg.core.tasks.TreePhysicsTask;
 import xzot1k.plugins.ptg.events.PhysicsActionEvent;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -120,7 +121,7 @@ public class Listeners implements Listener {
             e.setCancelled(true);
 
             if (getPluginInstance().getManager().isBlockDataVersion())
-                e.getEntity().getWorld().spawnParticle(Particle.BLOCK_CRACK, e.getEntity().getLocation(), 10, e.getBlock().getBlockData());
+                e.getEntity().getWorld().spawnParticle(Ref.isNewerThan(20)?((Particle)Ref.getStatic(Particle.class,"BLOCK")):Particle.BLOCK_CRACK, e.getEntity().getLocation(), 10, e.getBlock().getBlockData());
             else
                 e.getEntity().getWorld().playEffect(e.getEntity().getLocation(), Effect.STEP_SOUND, e.getBlock().getType().getId());
         }
@@ -227,6 +228,15 @@ public class Listeners implements Listener {
         }
     }
 
+    @EventHandler
+    public void onFireStart(BlockIgniteEvent e){
+        for(BlockState state:new HashSet<>(getPluginInstance().getManager().getSavedBlockStates())){
+            if(state.getLocation().equals(e.getBlock().getLocation())){
+                e.setCancelled(true);
+            }
+        }
+    }
+
     @EventHandler(priority = EventPriority.LOWEST)
     public void onBlockExplode(BlockExplodeEvent e) {
         if (e.isCancelled()) return;
@@ -240,9 +250,20 @@ public class Listeners implements Listener {
             e.blockList().clear();
             return;
         }
+        Block block;
+        Material type;
+        if(Ref.isNewerThan(20)){
+            Object blockState = Ref.invoke(e, "getExplodedBlockState");
+            block=(Block) Ref.invoke(blockState,"getBlock");
+            type=(Material) Ref.invoke(blockState,"getType");
+        }else {
+            block=e.getBlock();
+            type=block.getType();
+        }
 
-        e.setYield(handleExplosives(e.blockList(), e.getYield(), null, e.getBlock()));
+        e.setYield(handleExplosives(e.blockList(), e.getYield(), null, block,type));
     }
+
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onExplode(EntityExplodeEvent e) {
@@ -258,14 +279,18 @@ public class Listeners implements Listener {
             return;
         }
 
-        e.setYield(handleExplosives(e.blockList(), e.getYield(), e.getEntity(), null));
+        if(getPluginInstance().getWorldGuardHook().handleExplosion(e)){
+            return;
+        }
+
+        e.setYield(handleExplosives(e.blockList(), e.getYield(), e.getEntity(), null,null));
     }
 
     @SuppressWarnings("deprecation")
-    private float handleExplosives(List<Block> blocklist, float ogYield, Entity entity, Block causeBlock) {
+    private float handleExplosives(List<Block> blocklist, float ogYield, Entity entity, Block causeBlock,Material causeBlockType) {
         boolean yield = false,
                 isBlockedEntity = (causeBlock == null && entity != null && getPluginInstance().getManager().isBlockedExplosiveRegenEntity(entity.getType())),
-                isBlockedBlock = (entity == null && causeBlock != null && getPluginInstance().getManager().isBlockedExplosiveRegenBlock(causeBlock.getType()));
+                isBlockedBlock = (entity == null && causeBlock != null && getPluginInstance().getManager().isBlockedExplosiveRegenBlock(causeBlockType));
         blocklist.removeIf(block -> getPluginInstance().getManager().isAvoidedMaterial(block.getType(), block.getData()));
 
         final List<Block> blockList = new ArrayList<>(blocklist);
@@ -305,6 +330,7 @@ public class Listeners implements Listener {
                 continue;
             }
 
+
             if (physics && ((Math.random() * 100) < 15) && fallingBlockCount < (blockList.size() * 0.25)) {
                 getPluginInstance().getManager().createFallingBlock(block, isInventoryHolder ? block.getState() : blockState, true, false);
                 fallingBlockCount++;
@@ -333,8 +359,10 @@ public class Listeners implements Listener {
 
             final boolean inverted = getPluginInstance().getConfig().getBoolean("invert-bmr");
             if ((!inverted && getPluginInstance().getManager().isBlockedRegenMaterial(block.getType()))
-                    || (inverted && !getPluginInstance().getManager().isBlockedRegenMaterial(block.getType())))
+                    || (inverted && !getPluginInstance().getManager().isBlockedRegenMaterial(block.getType()))) {
                 continue;
+            }
+
 
             handleSpecialStateRestore(block, isInventoryHolder ? beforeClear : blockState, containerRestore, signRestore);
             getPluginInstance().getManager().getSavedBlockStates().add(isInventoryHolder ? block.getState() : blockState);
