@@ -81,6 +81,8 @@ break-regeneration: false
 break-drops: true
 # This determines how long (IN TICKS, 20 ticks = 1 second) it will take for the block to be regenerated to its original state.
 break-regeneration-delay: 20
+# This will stop the regeneration of blocks that are broken by the player if they are within a certain radius of the player.
+regen-ignore-radius: 10
 # This list is a whitelist and requires the "break-regeneration" option enabled. All materials in the list will regenerate after a delay to their original material.
 # Materials: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
 # (NOTE: This list will be avoided if it is empty. You may use the format: <material>:<delay> to set individual delays for specific materials)

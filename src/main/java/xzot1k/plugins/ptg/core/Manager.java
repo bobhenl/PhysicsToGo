@@ -31,6 +31,7 @@ public class Manager {
     private HashSet<BlockState> savedBlockStates;
     private HashMap<LocationClone, ItemStack[]> savedContainerContents;
     private HashMap<LocationClone, Object> savedSignData;
+    private final Map<Material, Integer> priorityCache = new HashMap<>();
 
     public Manager(PhysicsToGo pluginInstance) {
         setPluginInstance(pluginInstance);
@@ -479,59 +480,27 @@ public class Manager {
      * @param blockList The block list to sort.
      */
     public void sortFromLowestToHighest(List<Block> blockList) {
-        sort(blockList, 0, (blockList.size() - 1));
+        blockList.sort(Comparator
+                .comparingInt(Block::getY)
+                .thenComparingInt(block -> getMaterialSortPriority(block.getType())));
     }
 
-    private void sort(List<Block> blockList, int low, int high) {
-        if (low < high + 1) {
-            int p = partition(blockList, low, high);
-            sort(blockList, low, p - 1);
-            sort(blockList, p + 1, high);
-        }
+    private int getMaterialSortPriority(Material material) {
+        return priorityCache.computeIfAbsent(material, mat -> {
+            ConfigurationSection cs = pluginInstance.getAdvancedConfig().getConfigurationSection("block-sorting-priorities");
+            if (cs == null) return 10;
+
+            for (String key : cs.getKeys(false)) {
+                String normalizedKey = key.toUpperCase().replace(" ", "_").replace("-", "_");
+                if (mat.name().contains(normalizedKey))
+                    return cs.getInt(key, 10);
+            }
+            return 10;
+        });
     }
 
-    private void swap(List<Block> blockList, int index1, int index2) {
-        Block temp = blockList.get(index1);
-        blockList.set(index1, blockList.get(index2));
-        blockList.set(index2, temp);
-    }
-
-    private int getPivot(int low, int high) {
-        return getRandom().nextInt((high - low) + 1) + low;
-    }
-
-    private int partition(List<Block> blockList, int low, int high) {
-        swap(blockList, low, getPivot(low, high));
-        int border = low + 1;
-
-        for (int i = (border - 1); ++i <= high; ) {
-            Block currentBlock = blockList.get(i), nextBlock = blockList.get(low);
-            int currentPriority = getMaterialSortPriority(currentBlock.getType()), nextPriority = getMaterialSortPriority(nextBlock.getType());
-            if (currentBlock.getY() < nextBlock.getY() && currentPriority >= nextPriority) swap(blockList, i, border++);
-        }
-
-        swap(blockList, low, border - 1);
-        return border - 1;
-    }
-
-    /**
-     * Gets the sorting priority of a material based on the advanced configuration.
-     *
-     * @param material The material to get the priority of.
-     * @return The priority ranging from 0 to 10 (10 being HIGH priority).
-     */
-    public int getMaterialSortPriority(Material material) {
-        final ConfigurationSection cs = getPluginInstance().getAdvancedConfig().getConfigurationSection("block-sorting-priorities");
-        if (cs == null) return 10;
-
-        Collection<String> materialNames = cs.getKeys(false);
-        if (materialNames.isEmpty()) return 10;
-
-        for (String materialName : materialNames)
-            if (material.name().contains(materialName.toUpperCase().replace(" ", "_").replace("-", "_")))
-                return getPluginInstance().getAdvancedConfig().getInt("block-sorting-priorities." + materialName);
-
-        return 10;
+    public void refreshCache() {
+        priorityCache.clear();
     }
 
     // getters & setters

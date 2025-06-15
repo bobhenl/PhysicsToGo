@@ -266,6 +266,7 @@ public class PhysicsToGo extends JavaPlugin {
      */
     public void reloadConfigs() {
         reloadConfig();
+        manager.refreshCache();
 
         if (langFile == null) langFile = new File(getDataFolder(), "lang.yml");
         langConfig = YamlConfiguration.loadConfiguration(langFile);

@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import xzot1k.plugins.ptg.PhysicsToGo;
@@ -40,6 +41,19 @@ public class BlockRegenerationTask implements Runnable {
         getPluginInstance().getManager().getSavedBlockStates().remove(getBlockState()); // clears the saved state.
 
         if (getBlock() == null) return;
+
+        int ignore_radius = pluginInstance.getConfig().getInt("regen-ignore-radius", 10);
+        boolean playersNearby = block.getWorld().getNearbyEntities(block.getLocation(), ignore_radius, ignore_radius, ignore_radius)
+                .stream()
+                .anyMatch(entity -> entity instanceof Player);
+
+        if(playersNearby){
+            getPluginInstance().getServer().getScheduler().runTaskLater(getPluginInstance(),
+                    new BlockRegenerationTask(getPluginInstance(), block, blockState, isPlacement),
+                    getPluginInstance().getConfig().getInt("place-removal-delay"));
+            return;
+        }
+
         if (!getPluginInstance().getConfig().getBoolean("state-override") && !isPlacement())
             if (getBlock().getType() != Material.AIR && !getBlock().getType().name().contains("WATER") && !getBlock().getType().name().contains("LAVA"))
                 return;
