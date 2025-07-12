@@ -5,9 +5,7 @@
 package xzot1k.plugins.ptg.core;
 
 import me.devtec.shared.Ref;
-import org.bukkit.Effect;
-import org.bukkit.Material;
-import org.bukkit.Particle;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
@@ -66,6 +64,31 @@ public class Listeners implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onFall(BlockPhysicsEvent e) {
+        if (!getPluginInstance().getAdvancedConfig().getBoolean("cancel-fall-radius", true))
+            return;
+
+        if (getPluginInstance().doesNotPassHooksCheck(e.getBlock().getLocation()))
+            return;
+
+        World world = e.getBlock().getWorld();
+        Location location = e.getSourceBlock().getLocation();
+
+        boolean isWorldBlocked = getPluginInstance().getManager().isBlockedWorld(world);
+        boolean invert = getPluginInstance().getConfig().getBoolean("invert-wb", false);
+        if ((!invert && isWorldBlocked) || (invert && !isWorldBlocked))
+            return;
+
+        for (BlockState state : getPluginInstance().getManager().getSavedBlockStates()) {
+            if (state.getWorld() != world)
+                continue;
+
+            if (state.getLocation().distanceSquared(location) < 25) {
+                e.setCancelled(true);
+                return;
+            }
+        }
+
+        /*
         if (getPluginInstance().getAdvancedConfig().getBoolean("cancel-fall-radius")) {
             if (getPluginInstance().doesNotPassHooksCheck(e.getBlock().getLocation())) return;
 
@@ -82,7 +105,7 @@ public class Listeners implements Listener {
                         break;
                     }
             } catch (Exception ignored) {}
-        }
+        }*/
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
