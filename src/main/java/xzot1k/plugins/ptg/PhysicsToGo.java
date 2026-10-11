@@ -27,6 +27,7 @@ import xzot1k.plugins.ptg.core.hooks.WorldGuardHook;
 import xzot1k.plugins.ptg.core.objects.LocationClone;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -73,8 +74,13 @@ public class PhysicsToGo extends JavaPlugin {
      * Cleans up everything, regenerating saved states and cancelling currently active events.
      */
     public void initiateCleanUpTime() {
-        for (BlockState blockState : getManager().getSavedBlockStates())
-            blockState.update(true, false);
+        for (BlockState blockState : new ArrayList<>(getManager().getSavedBlockStates())) {
+            boolean updated = blockState.update(true, false);
+            if (!updated && blockState.getBlock() != null) {
+                blockState.getBlock().setBlockData(blockState.getBlockData(), false);
+            }
+        }
+        getManager().getSavedBlockStates().clear();
 
         for (Map.Entry<LocationClone, ItemStack[]> contents : getManager().getSavedContainerContents().entrySet()) {
             Location location = contents.getKey().asBukkitLocation();

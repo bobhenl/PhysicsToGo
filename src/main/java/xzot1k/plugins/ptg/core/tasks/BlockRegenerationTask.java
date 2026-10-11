@@ -36,22 +36,23 @@ public class BlockRegenerationTask implements Runnable {
     @SuppressWarnings({"unchecked", "deprecation"})
     @Override
     public void run() {
-        if (getBlockState() == null) return;
-        getPluginInstance().getManager().getSavedBlockStates().remove(getBlockState()); // clears the saved state.
+        if (getBlockState() == null || getBlock() == null) return;
 
-        if (getBlock() == null) return;
+        int ignore_radius = pluginInstance.getConfig().getInt("regen-ignore-radius", 0);
+        if (ignore_radius > 0) {
+            boolean playersNearby = block.getWorld().getNearbyEntities(block.getLocation(), ignore_radius, ignore_radius, ignore_radius)
+                    .stream()
+                    .anyMatch(entity -> entity instanceof Player);
 
-        int ignore_radius = pluginInstance.getConfig().getInt("regen-ignore-radius", 10);
-        boolean playersNearby = block.getWorld().getNearbyEntities(block.getLocation(), ignore_radius, ignore_radius, ignore_radius)
-                .stream()
-                .anyMatch(entity -> entity instanceof Player);
-
-        if(playersNearby){
-            getPluginInstance().getServer().getScheduler().runTaskLater(getPluginInstance(),
-                    new BlockRegenerationTask(getPluginInstance(), block, blockState, isPlacement),
-                    getPluginInstance().getConfig().getInt("place-removal-delay"));
-            return;
+            if (playersNearby) {
+                getPluginInstance().getServer().getScheduler().runTaskLater(getPluginInstance(),
+                        new BlockRegenerationTask(getPluginInstance(), block, blockState, isPlacement),
+                        getPluginInstance().getConfig().getInt("place-removal-delay", 20));
+                return;
+            }
         }
+
+        getPluginInstance().getManager().getSavedBlockStates().remove(getBlockState()); // clears the saved state only when proceeding to regenerate
 
         if (!getPluginInstance().getConfig().getBoolean("state-override") && !isPlacement())
             if (getBlock().getType() != Material.AIR && !getBlock().getType().name().contains("WATER") && !getBlock().getType().name().contains("LAVA"))
@@ -60,7 +61,10 @@ public class BlockRegenerationTask implements Runnable {
         RegenerateEvent regenerateEvent = new RegenerateEvent(getPluginInstance(), getBlockState());
         getPluginInstance().getServer().getPluginManager().callEvent(regenerateEvent);
         if (regenerateEvent.isCancelled()) return;
-        getBlockState().update(true, false);
+        boolean updated = getBlockState().update(true, false);
+        if (!updated) {
+            getBlock().setBlockData(getBlockState().getBlockData(), false);
+        }
         getPluginInstance().getManager().playNaturalBlockPlaceEffect((!isPlacement() ? getBlockState().getBlock() : getBlock()));
 
         if (getBlockState() instanceof InventoryHolder) {
