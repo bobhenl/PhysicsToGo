@@ -124,6 +124,11 @@ public class PhysicsToGo extends JavaPlugin {
         final Plugin factions = getServer().getPluginManager().getPlugin("Factions");
         if (factions != null) setFactionsHook(new FactionsHook(this));
         if (getServer().getPluginManager().getPlugin("Lands") != null) setLandsHook(new LandsHook(this));
+        if (worldGuardHook == null && getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+            try {
+                worldGuardHook = new WorldGuardHook();
+            } catch (Throwable ignored) {}
+        }
         if (getServer().getPluginManager().getPlugin("CoreProtect") != null)
             coreProtectHook = new CoreProtectHook(this);
 
@@ -140,11 +145,14 @@ public class PhysicsToGo extends JavaPlugin {
      */
     public boolean doesNotPassHooksCheck(Location location) {
         final boolean blockInClaims = getConfig().getBoolean("block-in-claims");
+        if (!blockInClaims) return false;
 
-        return (blockInClaims && (getWorldGuardHook() != null && getWorldGuardHook().passedWorldGuardHook(location)))
-                && ((getFactionsHook() != null && getFactionsHook().isInFactionClaim(location))
-                || (getLandsHook() != null && location.getWorld() != null
-                && getLandsHook().getLandsIntegration().isClaimed(location.getWorld(), location.getChunk().getX(), location.getChunk().getZ())));
+        boolean wgBlocked = getWorldGuardHook() != null && !getWorldGuardHook().passedWorldGuardHook(location);
+        boolean factionsBlocked = getFactionsHook() != null && getFactionsHook().isInFactionClaim(location);
+        boolean landsBlocked = getLandsHook() != null && location.getWorld() != null
+                && getLandsHook().getLandsIntegration().isClaimed(location.getWorld(), location.getChunk().getX(), location.getChunk().getZ());
+
+        return wgBlocked || factionsBlocked || landsBlocked;
     }
 
     // general helper methods

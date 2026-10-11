@@ -299,7 +299,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        if(getPluginInstance().getWorldGuardHook().handleExplosion(e)){
+        if (getPluginInstance().getWorldGuardHook() != null && getPluginInstance().getWorldGuardHook().handleExplosion(e)) {
             return;
         }
 

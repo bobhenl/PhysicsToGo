@@ -52,14 +52,24 @@ public class WorldGuardHook {
             Flag<?> explosion = registry.get("ptg-explosion");
             if (existing instanceof com.sk89q.worldguard.protection.flags.StateFlag)
                 PTG_ALLOW = (com.sk89q.worldguard.protection.flags.StateFlag) existing;
-            if(explosion instanceof StateFlag){
-                EXPLOSION_FLAG=(StateFlag) explosion;
+            if (explosion instanceof StateFlag) {
+                EXPLOSION_FLAG = (StateFlag) explosion;
             }
+        } catch (Throwable t) {
+            try {
+                com.sk89q.worldguard.protection.flags.Flag<?> existing = registry.get("ptg-allow");
+                Flag<?> explosion = registry.get("ptg-explosion");
+                if (existing instanceof com.sk89q.worldguard.protection.flags.StateFlag)
+                    PTG_ALLOW = (com.sk89q.worldguard.protection.flags.StateFlag) existing;
+                if (explosion instanceof StateFlag) {
+                    EXPLOSION_FLAG = (StateFlag) explosion;
+                }
+            } catch (Throwable ignored) {}
         }
     }
 
-    public boolean handleExplosion(EntityExplodeEvent e){
-        if(e.isCancelled())
+    public boolean handleExplosion(EntityExplodeEvent e) {
+        if (e.isCancelled() || EXPLOSION_FLAG == null)
             return false;
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         if (e.getLocation().getWorld() == null)
