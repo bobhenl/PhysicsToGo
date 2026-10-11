@@ -4,7 +4,6 @@
 
 package xzot1k.plugins.ptg.core.tasks;
 
-import me.devtec.shared.Ref;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -93,21 +92,24 @@ public class BlockRegenerationTask implements Runnable {
 
                 Object signData = getPluginInstance().getManager().getSavedSignData().get(locationClone);
 
-                if (Ref.isNewerThan(19)) {
-                    List<Pair<org.bukkit.block.sign.Side, org.bukkit.block.sign.SignSide>> signSides =
-                            (List<Pair<org.bukkit.block.sign.Side, org.bukkit.block.sign.SignSide>>) signData;
-                    for (int j = -1; ++j < signSides.size(); ) {
-                        Pair<org.bukkit.block.sign.Side, org.bukkit.block.sign.SignSide> signSide = signSides.get(j);
+                if (signData instanceof java.util.List) {
+                    @SuppressWarnings("unchecked")
+                    java.util.List<xzot1k.plugins.ptg.core.objects.Pair<org.bukkit.block.sign.Side, String[]>> signSides =
+                            (java.util.List<xzot1k.plugins.ptg.core.objects.Pair<org.bukkit.block.sign.Side, String[]>>) signData;
+                    for (xzot1k.plugins.ptg.core.objects.Pair<org.bukkit.block.sign.Side, String[]> signSide : signSides) {
                         org.bukkit.block.sign.SignSide side = sign.getSide(signSide.getKey());
-                        side.setGlowingText(signSide.getValue().isGlowingText());
-                        for (int k = -1; ++k < signSide.getValue().getLines().length; )
-                            side.setLine(k, signSide.getValue().getLine(k));
+                        String[] lines = signSide.getValue();
+                        if (lines != null) {
+                            for (int k = 0; k < lines.length; k++) {
+                                side.setLine(k, lines[k]);
+                            }
+                        }
                     }
-                } else {
+                } else if (signData instanceof String[]) {
                     String[] lines = (String[]) signData;
-                    if (lines == null || lines.length == 0) continue;
-
-                    for (int j = -1; ++j < lines.length; ) sign.setLine(j, lines[j]);
+                    for (int j = 0; j < lines.length; j++) {
+                        sign.setLine(j, lines[j]);
+                    }
                 }
 
                 sign.update(true, false);

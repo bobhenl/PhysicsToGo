@@ -4,7 +4,6 @@
 
 package xzot1k.plugins.ptg.core;
 
-import me.devtec.shared.Ref;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -143,10 +142,7 @@ public class Listeners implements Listener {
                 && !getPluginInstance().getConfig().getBoolean("block-forming")) {
             e.setCancelled(true);
 
-            if (getPluginInstance().getManager().isBlockDataVersion())
-                e.getEntity().getWorld().spawnParticle(Ref.isNewerThan(20)?((Particle)Ref.getStatic(Particle.class,"BLOCK")):Particle.BLOCK_CRACK, e.getEntity().getLocation(), 10, e.getBlock().getBlockData());
-            else
-                e.getEntity().getWorld().playEffect(e.getEntity().getLocation(), Effect.STEP_SOUND, e.getBlock().getType().getId());
+            e.getEntity().getWorld().spawnParticle(Particle.BLOCK, e.getEntity().getLocation(), 10, e.getBlock().getBlockData());
         }
     }
 
@@ -275,13 +271,14 @@ public class Listeners implements Listener {
         }
         Block block;
         Material type;
-        if(Ref.isNewerThan(20)){
-            Object blockState = Ref.invoke(e, "getExplodedBlockState");
-            block=(Block) Ref.invoke(blockState,"getBlock");
-            type=(Material) Ref.invoke(blockState,"getType");
-        }else {
-            block=e.getBlock();
-            type=block.getType();
+        try {
+            java.lang.reflect.Method getExplodedBlockState = e.getClass().getMethod("getExplodedBlockState");
+            BlockState explodedState = (BlockState) getExplodedBlockState.invoke(e);
+            block = explodedState != null ? explodedState.getBlock() : e.getBlock();
+            type = explodedState != null ? explodedState.getType() : (block != null ? block.getType() : Material.AIR);
+        } catch (Throwable ignored) {
+            block = e.getBlock();
+            type = block != null ? block.getType() : Material.AIR;
         }
 
         e.setYield(handleExplosives(e.blockList(), e.getYield(), null, block,type));
@@ -428,19 +425,11 @@ public class Listeners implements Listener {
 
         } else if (blockState instanceof Sign && signRestore) {
             Sign sign = (Sign) blockState;
-
-            if (Ref.isNewerThan(19)) {
-                List<Pair<org.bukkit.block.sign.Side, org.bukkit.block.sign.SignSide>> signSides = new ArrayList<Pair<org.bukkit.block.sign.Side,
-                        org.bukkit.block.sign.SignSide>>() {{
-                    for (int j = -1; ++j < org.bukkit.block.sign.Side.values().length; ) {
-                        org.bukkit.block.sign.Side side = org.bukkit.block.sign.Side.values()[j];
-                        add(new Pair<>(side, sign.getSide(side)));
-                    }
-                }};
-
-                getPluginInstance().getManager().getSavedSignData().put(new LocationClone(getPluginInstance(), block.getLocation()), signSides);
-            } else
-                getPluginInstance().getManager().getSavedSignData().put(new LocationClone(getPluginInstance(), block.getLocation()), sign.getLines());
+            List<Pair<org.bukkit.block.sign.Side, String[]>> signSides = new ArrayList<>();
+            for (org.bukkit.block.sign.Side side : org.bukkit.block.sign.Side.values()) {
+                signSides.add(new Pair<>(side, sign.getSide(side).getLines()));
+            }
+            getPluginInstance().getManager().getSavedSignData().put(new LocationClone(getPluginInstance(), block.getLocation()), signSides);
         }
     }
 

@@ -4,8 +4,6 @@
 
 package xzot1k.plugins.ptg;
 
-import me.devtec.shared.Ref;
-import me.devtec.shared.versioning.VersionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -109,27 +107,7 @@ public class PhysicsToGo extends JavaPlugin {
         updateConfigs();
 
         // very simply loop that runs once to see if current server version World class has the new particle API.
-        setParticleAPI(false);
-        for (Method method : World.class.getMethods()) {
-            if (method.getName().contains("spawnParticle")) {
-                setParticleAPI(true);
-                break;
-            }
-        }
-
-        try {
-            Ref.init(Ref.getClass("net.md_5.bungee.api.ChatColor") != null ? Ref.getClass("net.kyori.adventure.Adventure") != null ? Ref.ServerType.PAPER : Ref.ServerType.SPIGOT : Ref.ServerType.BUKKIT,
-                    Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3]);
-        } catch (Exception e) {
-            String version = (String) Ref.invoke(Bukkit.getServer(), "getMinecraftVersion");
-            VersionUtils.Version ver = VersionUtils.getVersion(version, "1.20.5");
-            if (ver == VersionUtils.Version.SAME_VERSION || ver == VersionUtils.Version.NEWER_VERSION)
-                Ref.init(Ref.getClass("net.md_5.bungee.api.ChatColor") != null ? Ref.getClass("net.kyori.adventure.Adventure") != null ? Ref.ServerType.PAPER : Ref.ServerType.SPIGOT : Ref.ServerType.BUKKIT,
-                        version);
-        }
-        // identifies and initializes the server's version.
-        /*setServerVersion(Double.parseDouble(getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3]
-                .replace("_R", ".").replaceAll("[rvV_]*", "")));*/
+        setParticleAPI(true);
 
         // creates and registers a new instance of the Manager class.
         setManager(new Manager(this));

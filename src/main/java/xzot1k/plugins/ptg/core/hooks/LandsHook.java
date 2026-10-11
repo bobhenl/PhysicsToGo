@@ -12,7 +12,14 @@ public class LandsHook {
     private LandsIntegration landsIntegration;
 
     public LandsHook(PhysicsToGo pluginInstance) {
-        setLandsIntegration(new LandsIntegration(pluginInstance));
+        try {
+            java.lang.reflect.Method ofMethod = LandsIntegration.class.getMethod("of", org.bukkit.plugin.Plugin.class);
+            setLandsIntegration((LandsIntegration) ofMethod.invoke(null, pluginInstance));
+        } catch (Throwable t) {
+            try {
+                setLandsIntegration(new LandsIntegration(pluginInstance));
+            } catch (Throwable ignored) {}
+        }
     }
 
     public LandsIntegration getLandsIntegration() {

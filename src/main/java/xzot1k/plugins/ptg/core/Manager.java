@@ -4,7 +4,6 @@
 
 package xzot1k.plugins.ptg.core;
 
-import me.devtec.shared.Ref;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -95,7 +94,7 @@ public class Manager {
      * @return If the server is post 1.13.
      */
     public boolean isBlockDataVersion() {
-        return Ref.isNewerThan(12); /*return getPluginInstance().getServerVersion() >= 1_13;*/
+        return true;
     }
 
     /**
@@ -104,7 +103,7 @@ public class Manager {
      * @return If the server is post 1.8.
      */
     public boolean isOffHandVersion() {
-        return Ref.isNewerThan(8);/*getPluginInstance().getServerVersion() > 1_8;*/
+        return true;
     }
 
     /**
@@ -300,9 +299,7 @@ public class Manager {
     public void playNaturalBlockBreakEffect(Block block) {
         if (getPluginInstance().getManager().isBlockDataVersion()) {
 
-            block.getWorld().spawnParticle(Ref.isNewerThan(20) ? ((Particle) Ref.getStatic(Particle.class, "DUST")) : Particle.BLOCK_DUST, ((block.getLocation().getX() + 0.5) + getPluginInstance().getManager().getRandomInRange(-1, 1)),
-                    ((block.getLocation().getY() + 0.5) + getPluginInstance().getManager().getRandomInRange(-1, 1)),
-                    ((block.getLocation().getZ() + 0.5) + getPluginInstance().getManager().getRandomInRange(-1, 1)), 10, new Particle.DustOptions(block.getBlockData().getMapColor(),block.getBlockData().getLightEmission()));
+            block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation().clone().add(0.5, 0.5, 0.5), 10, 0.3, 0.3, 0.3, block.getBlockData());
 
             Sound sound = Sound.BLOCK_METAL_BREAK;
             if (block.getType().name().contains("LOG") || block.getType().name().contains("WOOD")
@@ -367,9 +364,7 @@ public class Manager {
      */
     public void playNaturalBlockPlaceEffect(Block block) {
         if (getPluginInstance().getManager().isBlockDataVersion()) {
-            block.getWorld().spawnParticle(Ref.isNewerThan(20) ? ((Particle) Ref.getStatic(Particle.class, "DUST")) : Particle.BLOCK_DUST, ((block.getLocation().getX() + 0.5) + getPluginInstance().getManager().getRandomInRange(-0.5, 0.5)),
-                    ((block.getLocation().getY() + 0.5) + getPluginInstance().getManager().getRandomInRange(-0.5, 0.5)),
-                    ((block.getLocation().getZ() + 0.5) + getPluginInstance().getManager().getRandomInRange(-0.5, 0.5)), 5, new Particle.DustOptions(block.getBlockData().getMapColor(), block.getBlockData().getLightEmission()));
+            block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation().clone().add(0.5, 0.5, 0.5), 5, 0.2, 0.2, 0.2, block.getBlockData());
 
             Sound sound = Sound.BLOCK_METAL_PLACE;
             if (block.getType().name().contains("LOG") || block.getType().name().contains("WOOD")
@@ -465,10 +460,17 @@ public class Manager {
      */
     public SaplingData getReplantSapling(Material material) {
         TreeType treeType = TreeType.OAK;
-        if (material.name().contains("DARK_OAK")) treeType = TreeType.DARK_OAK;
-        else if (material.name().contains("ACACIA")) treeType = TreeType.ACACIA;
-        else if (material.name().contains("BIRCH")) treeType = TreeType.BIRCH;
-        else if (material.name().contains("JUNGLE")) treeType = TreeType.JUNGLE;
+        String name = material != null ? material.name() : "";
+        if (name.contains("DARK_OAK")) treeType = TreeType.DARK_OAK;
+        else if (name.contains("ACACIA")) treeType = TreeType.ACACIA;
+        else if (name.contains("BIRCH")) treeType = TreeType.BIRCH;
+        else if (name.contains("JUNGLE")) treeType = TreeType.JUNGLE;
+        else if (name.contains("SPRUCE")) treeType = TreeType.SPRUCE;
+        else if (name.contains("CHERRY")) treeType = TreeType.CHERRY;
+        else if (name.contains("MANGROVE")) treeType = TreeType.MANGROVE;
+        else if (name.contains("CRIMSON")) treeType = TreeType.CRIMSON;
+        else if (name.contains("WARPED")) treeType = TreeType.WARPED;
+        else if (name.contains("PALE_OAK")) treeType = TreeType.PALE_OAK;
         return new SaplingData(treeType);
     }
 
