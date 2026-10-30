@@ -1,0 +1,41 @@
+name: Autobuild release
+
+# Every push builds the plugin and publishes the jar as a rolling pre-release
+# ("latest-<branch>") so AutoUpdatePlugins can pick it up.
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn -B -U clean package
+
+      - name: Publish rolling pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: latest-${{ github.ref_name }}
+        run: |
+          JAR=$(ls target/*.jar | grep -v -E 'original-|-sources|-javadoc|-shaded' | head -n 1)
+          test -n "$JAR" || { echo "No plugin jar found"; ls -l target; exit 1; }
+          echo "Publishing $JAR"
+          gh release delete "$TAG" --cleanup-tag --yes || true
+          gh release create "$TAG" "$JAR" \
+            --target "$GITHUB_SHA" \
+            --title "PhysicsToGo (${{ github.ref_name }}) build ${{ github.run_number }}" \
+            --notes "Automatic build of commit $GITHUB_SHA." \
+            --prerelease
